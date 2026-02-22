@@ -11,7 +11,7 @@ import { WorkflowDeleteButton } from './workflow-delete-button';
 import { WorkflowAssignments } from './workflow-assignments';
 import Link from 'next/link';
 
-export function WorkflowView({ workflow, assignments, documents = [] }: WorkflowViewProps) {
+export function WorkflowView({ workflow, assignments, documents = [], users = [] }: WorkflowViewProps) {
   const t = useTranslations('app');
 
   return (
@@ -100,7 +100,7 @@ export function WorkflowView({ workflow, assignments, documents = [] }: Workflow
           <CardTitle>{t('assignedUsers')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <WorkflowAssignments workflowId={workflow.id} assignments={assignments} />
+          <WorkflowAssignments workflowId={workflow.id} assignments={assignments} users={users} />
         </CardContent>
       </Card>
 

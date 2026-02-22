@@ -1,4 +1,6 @@
 import { WorkflowType, DocumentStatus } from '@/lib/constants';
+import { User } from '@/types/user';
+
 
 export type WorkflowParam = {
   key: string;
@@ -138,6 +140,7 @@ export type WorkflowViewProps = {
   workflow: Workflow;
   assignments: WorkflowAssignment[];
   documents?: WorkflowDocument[];
+  users: User[];
 };
 
 export type AdminWorkflowPageProps = {
