@@ -29,28 +29,36 @@ export async function AppSidebar() {
     avatar: '', // TODO: include the icon if
   };
 
+  const isAdmin = session?.user.role === 'ADMIN';
+
   const items = [
     {
       title: t('home'),
       url: '/dashboard',
       icon: Home,
     },
-    {
-      title: t('myWorkflows'),
-      url: '/dashboard/workflow',
-      icon: Bot,
-    },
-    ...(session?.user.role === 'ADMIN'
+    // Only show /workflow for non-admin users
+    ...(!isAdmin
       ? [
           {
-            title: t('users'),
-            url: '/admin/user',
-            icon: Users,
+            title: t('myWorkflows'),
+            url: '/workflow',
+            icon: Bot,
           },
+        ]
+      : []),
+    // Admin-only items: Workflows first, then Users
+    ...(isAdmin
+      ? [
           {
             title: t('workflows'),
             url: '/admin/workflow',
             icon: Bot,
+          },
+          {
+            title: t('users'),
+            url: '/admin/user',
+            icon: Users,
           },
         ]
       : []),

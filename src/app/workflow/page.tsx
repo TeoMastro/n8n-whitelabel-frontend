@@ -57,25 +57,40 @@ export default async function WorkflowDashboardPage({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main area — specific view per workflow type */}
-        <div className="lg:col-span-2 space-y-6">
-          {selectedWorkflow.type === 'chat' ? (
-            <HostedChat workflow={selectedWorkflow} />
-          ) : (
-            <TriggerWorkflow workflow={selectedWorkflow} />
-          )}
-        </div>
+        {selectedWorkflow.type === 'chat' ? (
+          <>
+            {/* Left column — KB */}
+            <div className="space-y-6">
+              {selectedWorkflow.hasKnowledgeBase && (
+                <DocumentManager
+                  workflowId={selectedWorkflow.id}
+                  initialDocuments={documents}
+                />
+              )}
+            </div>
+            {/* Right column — Main area */}
+            <div className="lg:col-span-2 space-y-6">
+              <HostedChat workflow={selectedWorkflow} />
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Left column — Main area */}
+            <div className="lg:col-span-2 space-y-6">
+              <TriggerWorkflow workflow={selectedWorkflow} />
+            </div>
 
-        {/* Right sidebar — KB */}
-        <div className="space-y-6">
-
-          {selectedWorkflow.hasKnowledgeBase && (
-            <DocumentManager
-              workflowId={selectedWorkflow.id}
-              initialDocuments={documents}
-            />
-          )}
-        </div>
+            {/* Right column — KB */}
+            <div className="space-y-6">
+              {selectedWorkflow.hasKnowledgeBase && (
+                <DocumentManager
+                  workflowId={selectedWorkflow.id}
+                  initialDocuments={documents}
+                />
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

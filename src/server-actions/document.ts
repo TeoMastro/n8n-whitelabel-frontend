@@ -147,20 +147,14 @@ export async function triggerDocumentProcessingAction(documentId: string) {
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = createAdminClient();
-    const isAdmin = session.user.role === Role.ADMIN;
 
     // Mark as processing
-    const updateQuery = adminClient
+    const { error: updateError } = await adminClient
       .from('documents')
       .update({ status: 'processing' })
       .eq('id', documentId);
 
-    // Only filter by uploaded_by for non-admin users
-    if (!isAdmin) {
-      updateQuery.eq('uploaded_by', session.user.id);
-    }
-
-    await updateQuery;
+    if (updateError) throw updateError;
 
     // Fire-and-forget POST to the processing API route
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -199,9 +193,19 @@ export async function deleteDocumentAction(documentId: string) {
 
     if (fetchError || !doc) throw new Error('Document not found');
 
-    // Verify ownership (admins can delete any document)
+    // Verify access: admins can delete any document; users must be assigned to the workflow
     const isAdmin = session.user.role === Role.ADMIN;
-    if (!isAdmin && doc.uploaded_by !== session.user.id) throw new Error('Unauthorized');
+    if (!isAdmin) {
+      const supabase = await createClient();
+      const { data: assignment } = await supabase
+        .from('user_workflows')
+        .select('workflow_id')
+        .eq('workflow_id', doc.workflow_id)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (!assignment) throw new Error('Unauthorized');
+    }
 
     // Delete KB rows where metadata contains this file_id
     await adminClient
@@ -222,7 +226,7 @@ export async function deleteDocumentAction(documentId: string) {
     if (deleteError) throw deleteError;
 
     logger.info('Document deleted', { documentId, userId: session.user.id });
-    revalidatePath('/dashboard/workflow');
+    revalidatePath('/workflow');
 
     return { success: true };
   } catch (error) {

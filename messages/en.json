@@ -181,6 +181,7 @@
     "workflowActive": "Active",
     "workflowSystemPrompt": "System Prompt",
     "workflowConfig": "Configuration",
+    "testWorkflow": "Test Workflow",
     "workflowCreatedSuccess": "Workflow created successfully",
     "workflowUpdatedSuccess": "Workflow updated successfully",
     "workflowDeletedSuccess": "Workflow deleted successfully",
@@ -229,6 +230,8 @@
 
     "chatPlaceholder": "Send a message to start the conversation.",
     "chatInputPlaceholder": "Type a message... (Enter to send, Shift+Enter for new line)",
+    "openHostedChat": "Open Chat",
+    "openHostedChatDescription": "Click the button below to open the hosted AI chat interface.",
     "sendMessage": "Send",
 
     "systemPromptSaved": "System prompt saved.",

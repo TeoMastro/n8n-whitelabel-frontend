@@ -26,7 +26,7 @@ export function WorkflowSelector({ workflows, selectedId }: WorkflowSelectorProp
   };
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-col gap-2">
       <span className="text-sm font-medium text-muted-foreground">{t('selectWorkflow')}</span>
       <Select value={selectedId} onValueChange={handleChange}>
         <SelectTrigger className="w-[240px]">

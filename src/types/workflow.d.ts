@@ -3,7 +3,7 @@ import { WorkflowType, DocumentStatus } from '@/lib/constants';
 export type WorkflowParam = {
   key: string;
   label: string;
-  type: 'text' | 'select' | 'number' | 'boolean';
+  type: 'text' | 'textarea' | 'select' | 'number' | 'boolean';
   options?: string[];
   required: boolean;
   default?: string;
@@ -137,6 +137,7 @@ export type WorkflowFormProps = {
 export type WorkflowViewProps = {
   workflow: Workflow;
   assignments: WorkflowAssignment[];
+  documents?: WorkflowDocument[];
 };
 
 export type AdminWorkflowPageProps = {

@@ -2,6 +2,7 @@ import { getSession } from '@/lib/auth-session';
 import { notFound } from 'next/navigation';
 import { WorkflowView } from '@/components/admin/workflow-view';
 import { getWorkflowById, getWorkflowAssignments } from '@/server-actions/workflow';
+import { getDocumentsForWorkflow } from '@/server-actions/document';
 import { WorkflowPageProps } from '@/types/workflow';
 
 export default async function AdminWorkflowViewPage({ params }: WorkflowPageProps) {
@@ -19,9 +20,13 @@ export default async function AdminWorkflowViewPage({ params }: WorkflowPageProp
 
   if (!workflow) notFound();
 
+  const documents = workflow.hasKnowledgeBase
+    ? await getDocumentsForWorkflow(workflow.id)
+    : [];
+
   return (
     <div className="container mx-auto py-6">
-      <WorkflowView workflow={workflow} assignments={assignments} />
+      <WorkflowView workflow={workflow} assignments={assignments} documents={documents} />
     </div>
   );
 }

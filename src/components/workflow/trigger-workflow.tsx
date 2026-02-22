@@ -28,15 +28,39 @@ export function TriggerWorkflow({ workflow }: TriggerWorkflowProps) {
   const [paramValues, setParamValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(params.map((p) => [p.key, p.default ?? '']))
   );
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const setParam = (key: string, value: string) => {
     setParamValues((prev) => ({ ...prev, [key]: value }));
+    if (fieldErrors[key]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
   };
 
   const handleTrigger = async () => {
+    const errors: Record<string, string> = {};
+    let hasError = false;
+
+    params.forEach((p) => {
+      if (p.required && !paramValues[p.key]?.toString().trim()) {
+        errors[p.key] = t('allFieldsRequired');
+        hasError = true;
+      }
+    });
+
+    if (hasError) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
     setIsLoading(true);
     setResponse(null);
     setError(null);
@@ -70,7 +94,7 @@ export function TriggerWorkflow({ workflow }: TriggerWorkflowProps) {
           value={paramValues[param.key] ?? ''}
           onValueChange={(v) => setParam(param.key, v)}
         >
-          <SelectTrigger>
+          <SelectTrigger className={fieldErrors[param.key] ? 'border-destructive' : ''}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -84,12 +108,25 @@ export function TriggerWorkflow({ workflow }: TriggerWorkflowProps) {
       );
     }
 
+    if (param.type === 'textarea') {
+      return (
+        <Textarea
+          value={paramValues[param.key] ?? ''}
+          onChange={(e) => setParam(param.key, e.target.value)}
+          placeholder={param.default}
+          className={fieldErrors[param.key] ? 'border-destructive' : ''}
+          rows={4}
+        />
+      );
+    }
+
     return (
       <Input
         value={paramValues[param.key] ?? ''}
         onChange={(e) => setParam(param.key, e.target.value)}
         type={param.type === 'number' ? 'number' : 'text'}
         placeholder={param.default}
+        className={fieldErrors[param.key] ? 'border-destructive' : ''}
       />
     );
   };
@@ -108,11 +145,16 @@ export function TriggerWorkflow({ workflow }: TriggerWorkflowProps) {
       <CardContent className="space-y-4">
         {params.map((param) => (
           <div key={param.key} className="space-y-1">
-            <Label>
+            <Label className={fieldErrors[param.key] ? 'text-destructive' : ''}>
               {param.label}
               {param.required && <span className="text-destructive ml-1">*</span>}
             </Label>
             {renderParamInput(param)}
+            {fieldErrors[param.key] && (
+              <p className="text-[0.8rem] font-medium text-destructive">
+                {fieldErrors[param.key]}
+              </p>
+            )}
           </div>
         ))}
 

@@ -181,6 +181,7 @@
     "workflowActive": "Ενεργή",
     "workflowSystemPrompt": "Εντολή Συστήματος",
     "workflowConfig": "Ρυθμίσεις",
+    "testWorkflow": "Δοκιμή Ροής Εργασίας",
     "workflowCreatedSuccess": "Η ροή δημιουργήθηκε επιτυχώς",
     "workflowUpdatedSuccess": "Η ροή ενημερώθηκε επιτυχώς",
     "workflowDeletedSuccess": "Η ροή διαγράφηκε επιτυχώς",
@@ -229,6 +230,8 @@
 
     "chatPlaceholder": "Στείλτε ένα μήνυμα για να ξεκινήσετε τη συνομιλία.",
     "chatInputPlaceholder": "Πληκτρολογήστε μήνυμα... (Enter για αποστολή, Shift+Enter για νέα γραμμή)",
+    "openHostedChat": "Άνοιγμα Συνομιλίας",
+    "openHostedChatDescription": "Κάντε κλικ στο παρακάτω κουμπί για να ανοίξετε τη φιλοξενούμενη διεπαφή συνομιλίας AI.",
     "sendMessage": "Αποστολή",
 
     "systemPromptSaved": "Η εντολή συστήματος αποθηκεύτηκε.",
