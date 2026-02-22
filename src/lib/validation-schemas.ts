@@ -1,6 +1,37 @@
 import { z } from 'zod';
 import { Role, Status } from '@/lib/constants';
 
+// ============================================================
+// Workflow schemas
+// ============================================================
+
+export const createWorkflowSchema = z.object({
+  name: z.string().min(1, 'workflowNameRequired'),
+  description: z.string().optional(),
+  type: z.enum(['chat', 'trigger'] as const, { error: 'invalidWorkflowType' }),
+  webhook_url: z.string().min(1, 'webhookUrlRequired'),
+  has_knowledge_base: z.boolean().optional().default(false),
+  is_active: z.boolean().optional().default(true),
+  params_json: z.string().optional(),
+});
+
+export const updateWorkflowSchema = createWorkflowSchema;
+
+export const triggerWorkflowSchema = z.object({
+  workflowId: z.uuid(),
+  params: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const assignWorkflowSchema = z.object({
+  user_id: z.string().min(1, 'userIdRequired'),
+  workflow_id: z.string().min(1, 'workflowIdRequired'),
+});
+
+
+export const ingestDocumentSchema = z.object({
+  workflow_id: z.string().min(1, 'workflowIdRequired'),
+});
+
 export const signinSchema = z.object({
   email: z.email('invalidEmail'),
   password: z.string().min(1, 'passwordTooShort').min(6, 'passwordTooShort'),

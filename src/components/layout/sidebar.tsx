@@ -1,4 +1,4 @@
-import { Home, Users } from 'lucide-react';
+import { Home, Users, Bot } from 'lucide-react';
 import Link from 'next/link';
 
 import {
@@ -35,12 +35,22 @@ export async function AppSidebar() {
       url: '/dashboard',
       icon: Home,
     },
+    {
+      title: t('myWorkflows'),
+      url: '/dashboard/workflow',
+      icon: Bot,
+    },
     ...(session?.user.role === 'ADMIN'
       ? [
           {
             title: t('users'),
             url: '/admin/user',
             icon: Users,
+          },
+          {
+            title: t('workflows'),
+            url: '/admin/workflow',
+            icon: Bot,
           },
         ]
       : []),

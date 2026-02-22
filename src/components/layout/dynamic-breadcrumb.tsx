@@ -26,15 +26,15 @@ export function DynamicBreadcrumb() {
   const pathSegments = pathname
     .split('/')
     .filter(Boolean)
-    .filter((segment) => segment !== 'admin');
+    .filter((segment) => segment !== 'admin' && segment !== 'dashboard');
 
-  const isIdSegment = (segment: string) => {
-    if (/^\d+$/.test(segment)) return true;
+  const isUUIDSegment = (segment: string) => {
+    if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(segment)) return true;
     return false;
   };
 
   const formatSegmentName = (segment: string) => {
-    if (isIdSegment(segment)) {
+    if (isUUIDSegment(segment)) {
       return segment;
     }
 
