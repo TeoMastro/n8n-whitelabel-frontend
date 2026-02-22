@@ -219,6 +219,19 @@
     "workflowParamsInvalidJson": "Invalid JSON — must be a valid JSON array",
     "workflowModel": "Model",
     "workflowTemperature": "Temperature",
-    "workflowMaxTokens": "Max Tokens"
+    "workflowMaxTokens": "Max Tokens",
+
+    "chatHistory": "Chat History",
+    "chat-history": "Chat History",
+    "sessionId": "Session ID",
+    "messageCount": "Messages",
+    "firstMessage": "First Message",
+    "lastMessage": "Last Message",
+    "noChatSessionsFound": "No chat sessions found.",
+    "searchSessions": "Search by session ID...",
+    "filterByWorkflow": "Filter by workflow",
+    "allWorkflows": "All Workflows",
+    "chatSessionDetails": "Chat Session Details",
+    "backToChatHistory": "Back to Chat History"
   }
 }

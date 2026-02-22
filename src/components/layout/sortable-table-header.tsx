@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { TableHead } from '../ui/table';
 
-export type SortField = 'name' | 'email' | 'role' | 'status' | 'createdAt' | 'type';
+export type SortField = 'name' | 'email' | 'role' | 'status' | 'createdAt' | 'type' | 'workflowName' | 'messageCount' | 'firstMessageAt' | 'lastMessageAt';
 
 export const SortableTableHeader = ({
   field,

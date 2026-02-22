@@ -30,6 +30,7 @@ export function DynamicBreadcrumb() {
 
   const isUUIDSegment = (segment: string) => {
     if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(segment)) return true;
+    if (/^[0-9a-fA-F]{16,}$/.test(segment)) return true;
     return false;
   };
 

@@ -1,4 +1,4 @@
-import { Home, Users, Bot } from 'lucide-react';
+import { Home, Users, Bot, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 
 import {
@@ -47,7 +47,7 @@ export async function AppSidebar() {
           },
         ]
       : []),
-    // Admin-only items: Workflows first, then Users
+    // Admin-only: Workflows
     ...(isAdmin
       ? [
           {
@@ -55,6 +55,17 @@ export async function AppSidebar() {
             url: '/admin/workflow',
             icon: Bot,
           },
+        ]
+      : []),
+    // Chat History — visible to both roles, between Workflows and Users
+    {
+      title: t('chatHistory'),
+      url: '/chat-history',
+      icon: MessageSquare,
+    },
+    // Admin-only: Users (after Chat History)
+    ...(isAdmin
+      ? [
           {
             title: t('users'),
             url: '/admin/user',

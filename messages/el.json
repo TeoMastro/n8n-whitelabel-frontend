@@ -219,6 +219,19 @@
     "workflowParamsInvalidJson": "Μη έγκυρο JSON — πρέπει να είναι έγκυρος πίνακας JSON",
     "workflowModel": "Μοντέλο",
     "workflowTemperature": "Θερμοκρασία",
-    "workflowMaxTokens": "Μέγιστα Tokens"
+    "workflowMaxTokens": "Μέγιστα Tokens",
+
+    "chatHistory": "Ιστορικό Συνομιλιών",
+    "chat-history": "Ιστορικό Συνομιλιών",
+    "sessionId": "ID Συνεδρίας",
+    "messageCount": "Μηνύματα",
+    "firstMessage": "Πρώτο Μήνυμα",
+    "lastMessage": "Τελευταίο Μήνυμα",
+    "noChatSessionsFound": "Δεν βρέθηκαν συνεδρίες συνομιλίας.",
+    "searchSessions": "Αναζήτηση με ID συνεδρίας...",
+    "filterByWorkflow": "Φιλτράρισμα κατά ροή",
+    "allWorkflows": "Όλες οι Ροές",
+    "chatSessionDetails": "Λεπτομέρειες Συνεδρίας",
+    "backToChatHistory": "Πίσω στο Ιστορικό"
   }
 }
