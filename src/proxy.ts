@@ -45,7 +45,7 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  // Protect API routes (except stripe webhook)
+  // Protect API routes
   if (pathname.startsWith('/api') && !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -73,6 +73,6 @@ export const config = {
     '/settings/:path*',
     '/admin/:path*',
     '/auth/:path*',
-    '/api/((?!stripe/webhook).)*',
+    '/api/:path*',
   ],
 };

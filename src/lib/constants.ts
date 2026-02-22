@@ -36,15 +36,3 @@ export const Status = {
 
 export type Status = (typeof Status)[keyof typeof Status];
 
-export const SubscriptionStatus = {
-  active: 'active',
-  canceled: 'canceled',
-  incomplete: 'incomplete',
-  incomplete_expired: 'incomplete_expired',
-  past_due: 'past_due',
-  trialing: 'trialing',
-  unpaid: 'unpaid',
-} as const;
-
-export type SubscriptionStatus =
-  (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus];

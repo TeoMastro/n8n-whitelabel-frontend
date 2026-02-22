@@ -1,13 +1,12 @@
 # Next Launch Kit - Project Guide
 
-This is a Next.js 16 full-stack application with Supabase authentication, user management, Stripe subscriptions, and internationalization.
+This is a Next.js 16 full-stack application with Supabase authentication, user management, and internationalization.
 
 ## Tech Stack
 
 - **Framework**: Next.js 16 with App Router, React 19, TypeScript
 - **Database**: Supabase PostgreSQL with Row Level Security (RLS)
 - **Authentication**: Supabase Auth (email/password + Google OAuth)
-- **Payments**: Stripe (subscriptions, checkout, customer portal)
 - **Styling**: Tailwind CSS 4, shadcn/ui components
 - **Validation**: Zod schemas
 - **Logging**: Winston
@@ -23,9 +22,9 @@ This is a Next.js 16 full-stack application with Supabase authentication, user m
 ## Project Structure
 
 - `/src/app` - Next.js App Router pages and API routes
-- `/src/components` - React components (UI, auth, admin, layout, subscription)
+- `/src/components` - React components (UI, auth, admin, layout)
 - `/src/server-actions` - Server actions for data mutations
-- `/src/lib` - Utilities (supabase clients, validation, logging, constants, stripe)
+- `/src/lib` - Utilities (supabase clients, validation, logging, constants)
 - `/src/lib/supabase` - Supabase client helpers (client.ts, server.ts, admin.ts, middleware.ts)
 - `/src/types` - TypeScript type definitions
 - `/supabase` - SQL migrations and seed script
@@ -124,9 +123,6 @@ Required in `.env.local` (see `.env.example`):
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase public/anon key
 - `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (server-only)
 - `NEXT_PUBLIC_APP_URL` - Application URL
-- `STRIPE_SECRET_KEY` - Stripe secret key
-- `STRIPE_WEBHOOK_SECRET` - Stripe webhook signing secret
-- `NEXT_PUBLIC_STRIPE_*` - Stripe publishable key and price IDs
 
 ## Important Notes
 
@@ -137,7 +133,7 @@ Required in `.env.local` (see `.env.example`):
 - Password reset uses Supabase's built-in flow (no custom tokens)
 - User deletion prevented for own account (admin)
 - Prettier config: single quotes, 2 spaces, trailing commas
-- Constants for Role, Status, SubscriptionStatus in `/src/lib/constants.ts`
+- Constants for Role, Status in `/src/lib/constants.ts`
 
 ## File Creation
 

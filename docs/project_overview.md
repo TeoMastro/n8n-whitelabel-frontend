@@ -15,8 +15,6 @@ This document provides an overview of the "Next Launch Kit" project, a full-stac
 - **Row Level Security (RLS)**: Enforced for security.
 - **Auth methods**: Email/Password + Google OAuth.
 
-### Payments
-- **Stripe**: Handles subscriptions, checkout sessions, and the customer portal.
 
 ### Styling & UI
 - **Tailwind CSS 4**: Utility-first CSS framework.
@@ -42,7 +40,7 @@ This document provides an overview of the "Next Launch Kit" project, a full-stac
 │   ├── app/              # Next.js App Router pages and API routes
 │   ├── components/       # React components (UI, auth, admin, etc.)
 │   ├── hooks/            # Custom React hooks
-│   ├── lib/              # Utilities (Supabase, Stripe, logger, constants)
+│   ├── lib/              # Utilities (Supabase, logger, constants)
 │   ├── server-actions/   # Server actions for mutations
 │   ├── types/            # TypeScript type definitions
 │   └── proxy.ts          # Middleware proxy implementation

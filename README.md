@@ -1,6 +1,6 @@
 # Next Launch Kit
 
-A [Next.js 16](https://nextjs.org) full-stack starter kit with Supabase, Stripe, and internationalization.
+A [Next.js 16](https://nextjs.org) full-stack starter kit with Supabase and internationalization.
 
 ## Tech Stack
 
@@ -8,7 +8,6 @@ A [Next.js 16](https://nextjs.org) full-stack starter kit with Supabase, Stripe,
 - **Authentication**: [Supabase Auth](https://supabase.com/docs/guides/auth) (Email/Password + Google OAuth)
 - **Database**: [Supabase PostgreSQL](https://supabase.com/docs/guides/database) with Row Level Security
 - **Styling/UI**: [TailwindCSS 4](https://tailwindcss.com/docs) with [shadcn/ui](https://ui.shadcn.com/docs) components
-- **Payments**: [Stripe](https://stripe.com/docs) (subscriptions, checkout, portal)
 - **Validation**: [Zod](https://zod.dev)
 - **Logging**: [Winston](https://github.com/winstonjs/winston#documentation)
 - **i18n**: [next-intl](https://next-intl.dev) (English/Greek)
@@ -18,7 +17,6 @@ A [Next.js 16](https://nextjs.org) full-stack starter kit with Supabase, Stripe,
 
 - [Node.js](https://nodejs.org/) v20+
 - A [Supabase](https://supabase.com) project (free tier works)
-- A [Stripe](https://stripe.com) account (for payments)
 
 ## Quick Start
 
@@ -120,11 +118,6 @@ Required in `.env.local` (see `.env.example`):
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public/anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-only) |
 | `NEXT_PUBLIC_APP_URL` | Your app URL (e.g. `http://localhost:3000`) |
-| `STRIPE_SECRET_KEY` | Stripe secret key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
-| `NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID` | Stripe monthly price ID |
-| `NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID` | Stripe yearly price ID |
 
 ## Translations
 
