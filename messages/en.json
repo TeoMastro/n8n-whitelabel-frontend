@@ -233,6 +233,7 @@
     "chat-history": "Chat History",
     "sessionId": "Session ID",
     "messageCount": "Messages",
+    "totalCost": "Total Cost",
     "firstMessage": "First Message",
     "lastMessage": "Last Message",
     "noChatSessionsFound": "No chat sessions found.",
@@ -240,6 +241,22 @@
     "filterByWorkflow": "Filter by workflow",
     "allWorkflows": "All Workflows",
     "chatSessionDetails": "Chat Session Details",
-    "backToChatHistory": "Back to Chat History"
+    "backToChatHistory": "Back to Chat History",
+    
+    "triggerHistory": "Trigger History",
+    "trigger-history": "Trigger History",
+    "executor": "Executed By",
+    "durationMs": "Duration (ms)",
+    "duration": "Duration",
+    "executionId": "Execution ID",
+    "requestData": "Request Data",
+    "responseData": "Response Payload",
+    "noRequestParams": "No additional request parameters sent.",
+    "noResponseData": "No response data received.",
+    "search": "Search...",
+    "success": "Success",
+    "error": "Error",
+    "userEmail": "User Email",
+    "noResults": "No results found."
   }
 }

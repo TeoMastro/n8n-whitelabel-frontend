@@ -17,7 +17,7 @@ export default async function ChatSessionPage({ params }: ChatSessionPageProps) 
   const { sessionId } = await params;
   const decodedSessionId = decodeURIComponent(sessionId);
 
-  const { messages, workflowName } = await getChatSessionMessages(decodedSessionId);
+  const { messages, workflowName, totalCost } = await getChatSessionMessages(decodedSessionId);
 
   if (messages.length === 0) {
     notFound();
@@ -28,6 +28,7 @@ export default async function ChatSessionPage({ params }: ChatSessionPageProps) 
       <ChatSessionView
         sessionId={decodedSessionId}
         workflowName={workflowName}
+        totalCost={totalCost}
         messages={messages}
       />
     </div>

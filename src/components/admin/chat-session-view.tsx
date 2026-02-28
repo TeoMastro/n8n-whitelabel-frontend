@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, User, Bot } from 'lucide-react';
 import { ChatSessionDetailProps } from '@/types/chat-log';
 
-export function ChatSessionView({ sessionId, workflowName, messages }: ChatSessionDetailProps) {
+export function ChatSessionView({ sessionId, workflowName, totalCost, messages }: ChatSessionDetailProps) {
   const router = useRouter();
   const t = useTranslations('app');
 
@@ -29,13 +29,30 @@ export function ChatSessionView({ sessionId, workflowName, messages }: ChatSessi
         </p>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="py-4">
+            <CardTitle className="text-lg font-medium">{t('messageCount')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{messages.length}</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="py-4">
+            <CardTitle className="text-lg font-medium">{t('totalCost')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-500">
+              ${totalCost.toFixed(5)}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            {t('messageCount')}: {messages.length}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6 pt-6">
           {messages.length === 0 && (
             <p className="text-muted-foreground text-center py-6">{t('noChatSessionsFound')}</p>
           )}

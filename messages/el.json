@@ -233,6 +233,7 @@
     "chat-history": "Ιστορικό Συνομιλιών",
     "sessionId": "ID Συνεδρίας",
     "messageCount": "Μηνύματα",
+    "totalCost": "Συνολικό Κόστος",
     "firstMessage": "Πρώτο Μήνυμα",
     "lastMessage": "Τελευταίο Μήνυμα",
     "noChatSessionsFound": "Δεν βρέθηκαν συνεδρίες συνομιλίας.",
@@ -240,6 +241,22 @@
     "filterByWorkflow": "Φιλτράρισμα κατά ροή",
     "allWorkflows": "Όλες οι Ροές",
     "chatSessionDetails": "Λεπτομέρειες Συνεδρίας",
-    "backToChatHistory": "Πίσω στο Ιστορικό"
+    "backToChatHistory": "Πίσω στο Ιστορικό",
+    
+    "triggerHistory": "Ιστορικό Trigger",
+    "trigger-history": "Ιστορικό Trigger",
+    "executor": "Εκτελέστηκε Από",
+    "durationMs": "Διάρκεια (ms)",
+    "duration": "Διάρκεια",
+    "executionId": "ID Εκτέλεσης",
+    "requestData": "Δεδομένα Αιτήματος",
+    "responseData": "Μήνυμα Απάντησης",
+    "noRequestParams": "Δεν στάλθηκαν επιπλέον παράμετροι.",
+    "noResponseData": "Δεν ελήφθηκαν δεδομένα απάντησης.",
+    "search": "Αναζήτηση...",
+    "success": "Επιτυχία",
+    "error": "Σφάλμα",
+    "userEmail": "Email Χρήστη",
+    "noResults": "Δεν βρέθηκαν αποτελέσματα."
   }
 }

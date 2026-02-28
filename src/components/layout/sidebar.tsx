@@ -1,4 +1,4 @@
-import { Home, Users, Bot, MessageSquare } from 'lucide-react';
+import { Home, Users, Bot, MessageSquare, Activity } from 'lucide-react';
 import Link from 'next/link';
 
 import {
@@ -62,6 +62,12 @@ export async function AppSidebar() {
       title: t('chatHistory'),
       url: '/chat-history',
       icon: MessageSquare,
+    },
+    // Trigger History — visible to both roles
+    {
+      title: t('triggerHistory'),
+      url: '/trigger-history',
+      icon: Activity,
     },
     // Admin-only: Users (after Chat History)
     ...(isAdmin
