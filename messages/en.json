@@ -181,6 +181,12 @@
 
     "knowledgeBase": "Knowledge Base",
     "uploadDocument": "Upload Document",
+    "uploadDocuments": "Upload Documents",
+    "dropFilesHere": "Drop files here or click to browse",
+    "uploadingProgress": "Uploading {current} of {total}...",
+    "uploadPartialSuccess": "{success} uploaded, {failed} failed",
+    "uploadFailed": "failed",
+    "uploadSuccessCount": "{count} uploaded successfully",
     "documentName": "Document",
     "documentType": "Type",
     "documentSize": "Size",
@@ -194,8 +200,10 @@
     "deleteDocumentConfirmation": "This will permanently delete \"{name}\" and remove its content from the knowledge base.",
     "noDocumentsFound": "No documents uploaded yet.",
     "uploadDocumentHint": "Supported: PDF, TXT, DOCX, MD · Max 10 MB",
+    "uploadDocumentsHint": "PDF, TXT, DOCX, MD · Max 10 MB each · Up to 10 files",
     "unsupportedFileType": "Unsupported file type. Please upload PDF, TXT, DOCX, or MD.",
     "fileTooLarge": "File is too large. Maximum size is 10 MB.",
+    "tooManyFiles": "You can upload at most {max} files at once.",
 
     "selectWorkflow": "Select workflow",
     "triggerWorkflow": "Run Workflow",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useTransition } from 'react';
+import { useState, useRef, useTransition, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -33,7 +33,7 @@ import {
 import { Upload, Trash2, Database } from 'lucide-react';
 import { InfoAlert } from '@/components/info-alert';
 import { WorkflowDocument } from '@/types/workflow';
-import { DocumentStatus, SUPPORTED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from '@/lib/constants';
+import { DocumentStatus, SUPPORTED_FILE_TYPES, MAX_FILE_SIZE_BYTES, MAX_UPLOAD_FILES } from '@/lib/constants';
 
 interface DocumentManagerProps {
   workflowId: string;
@@ -60,8 +60,10 @@ export function DocumentManager({ workflowId, initialDocuments }: DocumentManage
   const fileRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const startPolling = (documentId: string) => {
     setPollingIds((prev) => new Set(prev).add(documentId));
@@ -83,66 +85,136 @@ export function DocumentManager({ workflowId, initialDocuments }: DocumentManage
     }, 3000);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!fileRef.current) return;
-    fileRef.current.value = '';
+  const handleFiles = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
 
-    if (!file) return;
-
-    // Client-side validation
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
-    if (!SUPPORTED_FILE_TYPES.includes(ext as (typeof SUPPORTED_FILE_TYPES)[number])) {
-      setAlert({ message: t('unsupportedFileType'), type: 'error' });
+    if (files.length > MAX_UPLOAD_FILES) {
+      setAlert({ message: t('tooManyFiles', { max: MAX_UPLOAD_FILES }), type: 'error' });
       return;
     }
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      setAlert({ message: t('fileTooLarge'), type: 'error' });
+
+    // Client-side validation: filter valid files and collect skipped ones
+    const validFiles: File[] = [];
+    const skippedNames: string[] = [];
+
+    for (const file of files) {
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+      if (!SUPPORTED_FILE_TYPES.includes(ext as (typeof SUPPORTED_FILE_TYPES)[number])) {
+        skippedNames.push(`${file.name} (${t('unsupportedFileType')})`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        skippedNames.push(`${file.name} (${t('fileTooLarge')})`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) {
+      setAlert({ message: skippedNames.join(', '), type: 'error' });
       return;
     }
 
     setUploading(true);
     setAlert(null);
+    setUploadProgress({ current: 0, total: validFiles.length });
 
-    try {
-      // Step 1: Create document record + get signed URL
-      const formData = new FormData();
-      formData.append('workflow_id', workflowId);
-      formData.append('file_name', file.name);
-      formData.append('file_size', String(file.size));
-      formData.append('file_type', file.type);
+    let successCount = 0;
+    const failedNames: string[] = [];
 
-      const result = await initiateDocumentUploadAction(
-        { success: false, errors: {}, formData: { workflow_id: workflowId }, globalError: null },
-        formData
-      );
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      setUploadProgress({ current: i + 1, total: validFiles.length });
 
-      if (!result.success || !result.documentId || !result.signedUploadUrl) {
-        setAlert({ message: t(result.globalError ?? 'unexpectedError'), type: 'error' });
-        return;
+      try {
+        // Step 1: Create document record + get signed URL
+        const formData = new FormData();
+        formData.append('workflow_id', workflowId);
+        formData.append('file_name', file.name);
+        formData.append('file_size', String(file.size));
+        formData.append('file_type', file.type);
+
+        const result = await initiateDocumentUploadAction(
+          { success: false, errors: {}, formData: { workflow_id: workflowId }, globalError: null },
+          formData
+        );
+
+        if (!result.success || !result.documentId || !result.signedUploadUrl) {
+          failedNames.push(file.name);
+          continue;
+        }
+
+        // Step 2: Upload directly to Supabase Storage
+        const uploadRes = await fetch(result.signedUploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        });
+
+        if (!uploadRes.ok) {
+          failedNames.push(file.name);
+          continue;
+        }
+
+        // Step 3: Trigger processing
+        await triggerDocumentProcessingAction(result.documentId);
+
+        // Step 4: Start polling
+        startPolling(result.documentId);
+        successCount++;
+      } catch {
+        failedNames.push(file.name);
       }
-
-      // Step 2: Upload directly to Supabase Storage
-      const uploadRes = await fetch(result.signedUploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type || 'application/octet-stream' },
-      });
-
-      if (!uploadRes.ok) throw new Error('Upload failed');
-
-      // Step 3: Trigger processing
-      await triggerDocumentProcessingAction(result.documentId);
-
-      // Step 4: Start polling
-      startPolling(result.documentId);
-      router.refresh();
-    } catch {
-      setAlert({ message: t('unexpectedError'), type: 'error' });
-    } finally {
-      setUploading(false);
     }
+
+    // Build result message
+    if (failedNames.length > 0 && successCount > 0) {
+      setAlert({
+        message: `${failedNames.join(', ')} ${t('uploadFailed')}. ${t('uploadSuccessCount', { count: successCount })}`,
+        type: 'error',
+      });
+    } else if (failedNames.length > 0) {
+      setAlert({ message: `${failedNames.join(', ')} ${t('uploadFailed')}`, type: 'error' });
+    } else if (skippedNames.length > 0) {
+      setAlert({
+        message: t('uploadPartialSuccess', { success: successCount, failed: skippedNames.length }),
+        type: 'success',
+      });
+    }
+
+    router.refresh();
+    setUploading(false);
+    setUploadProgress(null);
+  }, [workflowId, t, router, startPolling]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    if (fileRef.current) fileRef.current.value = '';
+    await handleFiles(files);
   };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    if (uploading || isPending) return;
+    const files = Array.from(e.dataTransfer.files);
+    await handleFiles(files);
+  }, [uploading, isPending, handleFiles]);
 
   const handleDelete = (documentId: string) => {
     startTransition(async () => {
@@ -167,26 +239,38 @@ export function DocumentManager({ workflowId, initialDocuments }: DocumentManage
       <CardContent className="space-y-4">
         {alert && <InfoAlert message={alert.message} type={alert.type} />}
 
-        {/* Upload area */}
-        <div>
+        {/* Drop zone */}
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => !uploading && !isPending && fileRef.current?.click()}
+          className={`
+            relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
+            transition-colors duration-200
+            ${isDragOver
+              ? 'border-primary bg-primary/5'
+              : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+            }
+            ${(uploading || isPending) ? 'opacity-50 cursor-not-allowed' : ''}
+          `}
+        >
           <input
             ref={fileRef}
             type="file"
             accept=".pdf,.txt,.docx,.md"
+            multiple
             onChange={handleFileChange}
             className="hidden"
           />
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading || isPending}
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            {uploading ? t('loading') : t('uploadDocument')}
-          </Button>
+          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-sm font-medium">
+            {uploading && uploadProgress
+              ? t('uploadingProgress', { current: uploadProgress.current, total: uploadProgress.total })
+              : t('dropFilesHere')}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {t('uploadDocumentHint')}
+            {t('uploadDocumentsHint')}
           </p>
         </div>
 

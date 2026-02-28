@@ -181,6 +181,12 @@
 
     "knowledgeBase": "Βάση Γνώσης",
     "uploadDocument": "Ανέβασμα Εγγράφου",
+    "uploadDocuments": "Ανέβασμα Εγγράφων",
+    "dropFilesHere": "Σύρετε αρχεία εδώ ή κάντε κλικ για αναζήτηση",
+    "uploadingProgress": "Ανέβασμα {current} από {total}...",
+    "uploadPartialSuccess": "{success} ανέβηκαν, {failed} απέτυχαν",
+    "uploadFailed": "απέτυχε",
+    "uploadSuccessCount": "{count} ανέβηκαν επιτυχώς",
     "documentName": "Έγγραφο",
     "documentType": "Τύπος",
     "documentSize": "Μέγεθος",
@@ -194,8 +200,10 @@
     "deleteDocumentConfirmation": "Αυτό θα διαγράψει οριστικά το \"{name}\" και θα αφαιρέσει το περιεχόμενό του από τη βάση γνώσης.",
     "noDocumentsFound": "Δεν έχουν ανέβει έγγραφα ακόμη.",
     "uploadDocumentHint": "Υποστηρίζονται: PDF, TXT, DOCX, MD · Μέγ. 10 MB",
+    "uploadDocumentsHint": "PDF, TXT, DOCX, MD · Μέγ. 10 MB ανά αρχείο · Έως 10 αρχεία",
     "unsupportedFileType": "Μη υποστηριζόμενος τύπος αρχείου. Παρακαλώ ανεβάστε PDF, TXT, DOCX ή MD.",
     "fileTooLarge": "Το αρχείο είναι πολύ μεγάλο. Μέγιστο μέγεθος 10 MB.",
+    "tooManyFiles": "Μπορείτε να ανεβάσετε το πολύ {max} αρχεία ταυτόχρονα.",
 
     "selectWorkflow": "Επιλογή ροής",
     "triggerWorkflow": "Εκτέλεση Ροής",

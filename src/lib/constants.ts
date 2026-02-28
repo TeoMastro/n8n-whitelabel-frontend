@@ -20,6 +20,7 @@ export const SUPPORTED_FILE_TYPES = ['pdf', 'txt', 'docx', 'md'] as const;
 export type SupportedFileType = (typeof SUPPORTED_FILE_TYPES)[number];
 
 export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+export const MAX_UPLOAD_FILES = 10;
 
 export const Role = {
   USER: 'USER',

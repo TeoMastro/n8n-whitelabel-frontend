@@ -91,8 +91,9 @@ export async function initiateDocumentUploadAction(
 
     const adminClient = createAdminClient();
 
-    // Create document record
-    const storagePath = `${workflowId}/${session.user.id}/${Date.now()}_${fileName}`;
+    // Create document record — sanitize filename for storage path (keep original for display)
+    const sanitizedName = fileName.replace(/[^\x20-\x7E]/g, '_');
+    const storagePath = `${workflowId}/${session.user.id}/${Date.now()}_${sanitizedName}`;
     const { data: doc, error: insertError } = await adminClient
       .from('documents')
       .insert({
@@ -156,14 +157,10 @@ export async function triggerDocumentProcessingAction(documentId: string) {
 
     if (updateError) throw updateError;
 
-    // Fire-and-forget POST to the processing API route
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    fetch(`${appUrl}/api/documents/process`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ documentId, userId: session.user.id }),
-    }).catch((err) => {
-      logger.error('Failed to trigger document processing', { error: err.message });
+    // Fire-and-forget: call processDocument directly (no HTTP round-trip)
+    const { processDocument } = await import('@/lib/process-document');
+    processDocument(documentId).catch((err) => {
+      logger.error('Failed to process document', { error: (err as Error).message });
     });
 
     return { success: true };
