@@ -3,11 +3,10 @@
 import { useState, useTransition, useActionState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  assignWorkflowToUserAction,
-  unassignWorkflowFromUserAction,
-} from '@/server-actions/workflow';
+  assignUserToCompanyAction,
+  unassignUserFromCompanyAction,
+} from '@/server-actions/company';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import {
   Command,
   CommandEmpty,
@@ -35,15 +34,22 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { InfoAlert } from '@/components/info-alert';
-import { AssignWorkflowFormState } from '@/types/workflow';
+import { AssignUserToCompanyFormState } from '@/types/company';
 
-export function WorkflowAssignments({
-  workflowId,
+export function CompanyAssignments({
+  companyId,
   assignments,
   users = [],
 }: {
-  workflowId: string;
-  assignments: any[];
+  companyId: string;
+  assignments: {
+    userId: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    assignedAt: Date;
+    assignedBy: string | null;
+  }[];
   users?: User[];
 }) {
   const t = useTranslations('app');
@@ -52,23 +58,23 @@ export function WorkflowAssignments({
   const [open, setOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
 
-  const initialAssignState: AssignWorkflowFormState = {
+  const initialAssignState: AssignUserToCompanyFormState = {
     success: false,
     errors: {},
-    formData: { user_id: '', workflow_id: workflowId },
+    formData: { user_id: '', company_id: companyId },
     globalError: null,
   };
 
   const [assignState, assignAction, isAssigning] = useActionState(
-    assignWorkflowToUserAction,
+    assignUserToCompanyAction,
     initialAssignState
   );
 
   const handleUnassign = async (userId: string) => {
     startTransition(async () => {
       try {
-        await unassignWorkflowFromUserAction(userId, workflowId);
-        setAlert({ message: t('workflowUnassignedSuccess'), type: 'success' });
+        await unassignUserFromCompanyAction(userId, companyId);
+        setAlert({ message: t('userUnassignedSuccess'), type: 'success' });
       } catch {
         setAlert({ message: t('unexpectedError'), type: 'error' });
       }
@@ -87,7 +93,7 @@ export function WorkflowAssignments({
 
       {/* Assign form */}
       <form action={assignAction} className="flex gap-2 items-end">
-        <input type="hidden" name="workflow_id" value={workflowId} />
+        <input type="hidden" name="company_id" value={companyId} />
         <div className="flex-1 space-y-1">
           <input type="hidden" name="user_id" value={selectedUserId} />
           <Popover open={open} onOpenChange={setOpen}>
@@ -147,7 +153,7 @@ export function WorkflowAssignments({
         <InfoAlert message={t(assignState.globalError)} type="error" />
       )}
       {assignState.success && (
-        <InfoAlert message={t('workflowAssignedSuccess')} type="success" />
+        <InfoAlert message={t('userAssignedSuccess')} type="success" />
       )}
 
       <Separator />
@@ -169,9 +175,9 @@ export function WorkflowAssignments({
             {assignments.map((a) => (
               <TableRow key={a.userId}>
                 <TableCell>
-                  {a.user.firstName} {a.user.lastName}
+                  {a.firstName} {a.lastName}
                 </TableCell>
-                <TableCell>{a.user.email}</TableCell>
+                <TableCell>{a.email}</TableCell>
                 <TableCell>
                   {new Date(a.assignedAt).toLocaleDateString()}
                 </TableCell>

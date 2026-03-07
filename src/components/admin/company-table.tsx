@@ -3,7 +3,7 @@
 import { useState, useTransition, useCallback, useEffect } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { deleteWorkflowAction } from '@/server-actions/workflow';
+import { deleteCompanyAction } from '@/server-actions/company';
 import {
   Table,
   TableBody,
@@ -15,13 +15,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -32,16 +25,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2, Plus, Eye, X } from 'lucide-react';
 import { useDebouncedCallback } from 'use-debounce';
 import { Pagination } from '@/components/layout/pagination';
 import { SortableTableHeader, SortField } from '@/components/layout/sortable-table-header';
 import { InfoAlert } from '@/components/info-alert';
-import { WorkflowTableProps } from '@/types/workflow';
+import { CompanyTableProps } from '@/types/company';
 
-export function WorkflowTable({
-  workflows,
+export function CompanyTable({
+  companies,
   totalCount,
   totalPages,
   currentPage,
@@ -49,18 +41,13 @@ export function WorkflowTable({
   sortField,
   sortDirection,
   searchTerm,
-  typeFilter,
-  companyFilter,
-  companies,
-}: WorkflowTableProps) {
+}: CompanyTableProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations('app');
 
   const [searchLocal, setSearchLocal] = useState(searchTerm);
-  const [typeFilterLocal, setTypeFilterLocal] = useState(typeFilter);
-  const [companyFilterLocal, setCompanyFilterLocal] = useState(companyFilter);
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -71,7 +58,7 @@ export function WorkflowTable({
     (params: Record<string, string>) => {
       const current = new URLSearchParams(searchParams);
       Object.entries(params).forEach(([key, value]) => {
-        if (value && value !== 'all' && value !== '') {
+        if (value && value !== '') {
           current.set(key, value);
         } else {
           current.delete(key);
@@ -107,28 +94,12 @@ export function WorkflowTable({
     updateUrl({ search: value, page: '1' });
   }, 300);
 
-  const handleTypeFilter = useCallback(
-    (value: string) => {
-      setTypeFilterLocal(value);
-      updateUrl({ typeFilter: value, page: '1' });
-    },
-    [updateUrl]
-  );
-
-  const handleCompanyFilter = useCallback(
-    (value: string) => {
-      setCompanyFilterLocal(value);
-      updateUrl({ companyFilter: value, page: '1' });
-    },
-    [updateUrl]
-  );
-
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     startTransition(async () => {
       try {
-        await deleteWorkflowAction(id);
-        setAlert({ message: t('workflowDeletedSuccess'), type: 'success' });
+        await deleteCompanyAction(id);
+        setAlert({ message: t('companyDeletedSuccess'), type: 'success' });
       } catch {
         setAlert({ message: t('unexpectedError'), type: 'error' });
       } finally {
@@ -139,18 +110,16 @@ export function WorkflowTable({
 
   const handleReset = useCallback(() => {
     setSearchLocal('');
-    setTypeFilterLocal('all');
-    setCompanyFilterLocal('all');
-    updateUrl({ search: '', typeFilter: 'all', companyFilter: 'all', page: '1' });
+    updateUrl({ search: '', page: '1' });
   }, [updateUrl]);
 
-  const hasFilters = searchLocal !== '' || typeFilterLocal !== 'all' || companyFilterLocal !== 'all';
+  const hasFilters = searchLocal !== '';
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{t('workflows')}</h1>
-        <Button onClick={() => router.push('/admin/workflow/create')}>
+        <h1 className="text-2xl font-bold">{t('companies')}</h1>
+        <Button onClick={() => router.push('/admin/company/create')}>
           <Plus className="h-4 w-4" />
           <span className="hidden md:block">{t('create')}</span>
         </Button>
@@ -161,7 +130,7 @@ export function WorkflowTable({
 
       <div className="flex flex-col md:flex-row gap-4">
         <Input
-          placeholder={t('searchWorkflows')}
+          placeholder={t('searchCompanies')}
           value={searchLocal}
           onChange={(e) => {
             setSearchLocal(e.target.value);
@@ -169,27 +138,6 @@ export function WorkflowTable({
           }}
           className="w-full md:max-w-sm"
         />
-        <Select value={typeFilterLocal} onValueChange={handleTypeFilter}>
-          <SelectTrigger className="w-full md:w-[180px]">
-            <SelectValue placeholder={t('filterByType')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('allTypes')}</SelectItem>
-            <SelectItem value="chat">{t('workflowTypeChat')}</SelectItem>
-            <SelectItem value="trigger">{t('workflowTypeTrigger')}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={companyFilterLocal} onValueChange={handleCompanyFilter}>
-          <SelectTrigger className="w-full md:w-[200px]">
-            <SelectValue placeholder={t('filterByCompany')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('allCompanies')}</SelectItem>
-            {companies.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         {hasFilters && (
           <Button variant="outline" size="sm" onClick={handleReset}>
             <X className="mr-2 h-4 w-4" />
@@ -205,12 +153,7 @@ export function WorkflowTable({
               <SortableTableHeader field="name" currentField={sortField} direction={sortDirection} onSort={handleSort}>
                 {t('name')}
               </SortableTableHeader>
-              <TableHead>{t('company')}</TableHead>
-              <SortableTableHeader field="type" currentField={sortField} direction={sortDirection} onSort={handleSort}>
-                {t('workflowType')}
-              </SortableTableHeader>
-              <TableHead>{t('knowledgeBase')}</TableHead>
-              <TableHead>{t('status')}</TableHead>
+              <TableHead>{t('companyNote')}</TableHead>
               <SortableTableHeader field="createdAt" currentField={sortField} direction={sortDirection} onSort={handleSort}>
                 {t('created')}
               </SortableTableHeader>
@@ -218,31 +161,14 @@ export function WorkflowTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {workflows.map((wf) => (
-              <TableRow key={wf.id}>
-                <TableCell className="font-medium">{wf.name}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {wf.companyName || '—'}
+            {companies.map((company) => (
+              <TableRow key={company.id}>
+                <TableCell className="font-medium">{company.name}</TableCell>
+                <TableCell className="text-muted-foreground text-sm max-w-[300px] truncate">
+                  {company.note || '—'}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={wf.type === 'chat' ? 'default' : 'secondary'}>
-                    {wf.type === 'chat' ? t('workflowTypeChat') : t('workflowTypeTrigger')}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {wf.hasKnowledgeBase ? (
-                    <Badge variant="outline">{t('active')}</Badge>
-                  ) : (
-                    <span className="text-muted-foreground text-sm">—</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={wf.isActive ? 'default' : 'destructive'}>
-                    {wf.isActive ? t('activeStatus') : t('inactiveStatus')}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {new Date(wf.createdAt).toLocaleDateString('en-US', {
+                  {new Date(company.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit',
@@ -253,7 +179,7 @@ export function WorkflowTable({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => router.push(`/admin/workflow/${wf.id}`)}
+                      onClick={() => router.push(`/admin/company/${company.id}`)}
                       disabled={isPending}
                     >
                       <Eye className="h-4 w-4" />
@@ -261,7 +187,7 @@ export function WorkflowTable({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => router.push(`/admin/workflow/${wf.id}/update`)}
+                      onClick={() => router.push(`/admin/company/${company.id}/update`)}
                       disabled={isPending}
                     >
                       <Pencil className="h-4 w-4" />
@@ -271,7 +197,7 @@ export function WorkflowTable({
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={isPending || deletingId === wf.id}
+                          disabled={isPending || deletingId === company.id}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -280,13 +206,13 @@ export function WorkflowTable({
                         <AlertDialogHeader>
                           <AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            {t('deleteWorkflowConfirmation', { name: wf.name })}
+                            {t('deleteCompanyConfirmation', { name: company.name })}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => handleDelete(wf.id)}
+                            onClick={() => handleDelete(company.id)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-white"
                           >
                             {t('delete')}
@@ -301,8 +227,8 @@ export function WorkflowTable({
           </TableBody>
         </Table>
 
-        {workflows.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">{t('noWorkflowsFound')}</div>
+        {companies.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">{t('noCompaniesFound')}</div>
         )}
       </div>
 

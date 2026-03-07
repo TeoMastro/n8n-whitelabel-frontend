@@ -21,17 +21,30 @@ async function checkAuth() {
 }
 
 /**
- * For non-admin users, fetch their assigned workflow IDs.
+ * For non-admin users, fetch their accessible workflow IDs via company assignments.
  */
 async function getUserWorkflowIds(userId: string): Promise<string[]> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from('user_workflows')
-    .select('workflow_id')
+
+  // Get company IDs the user is assigned to
+  const { data: companies, error: companyError } = await supabase
+    .from('user_companies')
+    .select('company_id')
     .eq('user_id', userId);
 
-  if (error) throw error;
-  return (data || []).map((r) => r.workflow_id);
+  if (companyError) throw companyError;
+
+  const companyIds = (companies || []).map((r) => r.company_id);
+  if (companyIds.length === 0) return [];
+
+  // Get workflow IDs for those companies
+  const { data: workflows, error: wfError } = await supabase
+    .from('workflows')
+    .select('id')
+    .in('company_id', companyIds);
+
+  if (wfError) throw wfError;
+  return (workflows || []).map((r) => r.id);
 }
 
 // ============================================================
@@ -128,7 +141,7 @@ export async function getChatSessionMessages(
 
     const rows = data || [];
 
-    // For users, verify they have access to this workflow
+    // For users, verify they have access to this workflow via company
     if (!isAdmin && rows.length > 0) {
       const allowedWorkflowIds = await getUserWorkflowIds(session.user.id);
       if (!allowedWorkflowIds.includes(rows[0].workflow_id)) {
@@ -197,7 +210,7 @@ export async function getWorkflowsForFilter(): Promise<{ id: string; name: strin
       if (error) throw error;
       return (data || []).map((w) => ({ id: w.id, name: w.name }));
     } else {
-      // Users only see their assigned workflows
+      // Users only see workflows from their assigned companies
       const workflowIds = await getUserWorkflowIds(session.user.id);
       if (workflowIds.length === 0) return [];
 

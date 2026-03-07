@@ -1,9 +1,8 @@
 import { getSession } from '@/lib/auth-session';
 import { notFound } from 'next/navigation';
 import { WorkflowView } from '@/components/admin/workflow-view';
-import { getWorkflowById, getWorkflowAssignments } from '@/server-actions/workflow';
+import { getWorkflowById } from '@/server-actions/workflow';
 import { getDocumentsForWorkflow } from '@/server-actions/document';
-import { getAllUsersForExport } from '@/server-actions/user';
 import { WorkflowPageProps } from '@/types/workflow';
 
 export default async function AdminWorkflowViewPage({ params }: WorkflowPageProps) {
@@ -14,11 +13,7 @@ export default async function AdminWorkflowViewPage({ params }: WorkflowPageProp
   }
 
   const { id } = await params;
-  const [workflow, assignments, users] = await Promise.all([
-    getWorkflowById(id),
-    getWorkflowAssignments(id),
-    getAllUsersForExport({}),
-  ]);
+  const workflow = await getWorkflowById(id);
 
   if (!workflow) notFound();
 
@@ -28,7 +23,7 @@ export default async function AdminWorkflowViewPage({ params }: WorkflowPageProp
 
   return (
     <div className="container mx-auto py-6">
-      <WorkflowView workflow={workflow} assignments={assignments} documents={documents} users={users} />
+      <WorkflowView workflow={workflow} documents={documents} />
     </div>
   );
 }

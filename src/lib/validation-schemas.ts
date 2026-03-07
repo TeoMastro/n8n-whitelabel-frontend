@@ -6,6 +6,7 @@ import { Role, Status } from '@/lib/constants';
 // ============================================================
 
 export const createWorkflowSchema = z.object({
+  company_id: z.string().min(1, 'companyRequired'),
   name: z.string().min(1, 'workflowNameRequired'),
   description: z.string().optional(),
   type: z.enum(['chat', 'trigger'] as const, { error: 'invalidWorkflowType' }),
@@ -22,9 +23,16 @@ export const triggerWorkflowSchema = z.object({
   params: z.record(z.string(), z.unknown()).optional(),
 });
 
-export const assignWorkflowSchema = z.object({
+export const createCompanySchema = z.object({
+  name: z.string().min(1, 'companyNameRequired'),
+  note: z.string().optional(),
+});
+
+export const updateCompanySchema = createCompanySchema;
+
+export const assignUserToCompanySchema = z.object({
   user_id: z.string().min(1, 'userIdRequired'),
-  workflow_id: z.string().min(1, 'workflowIdRequired'),
+  company_id: z.string().min(1, 'companyRequired'),
 });
 
 

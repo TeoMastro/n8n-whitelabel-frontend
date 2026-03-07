@@ -63,7 +63,7 @@ export async function initiateDocumentUploadAction(
 
     const isAdmin = session.user.role === Role.ADMIN;
 
-    // Admins can access any workflow; regular users must be assigned
+    // Admins can access any workflow; regular users must be assigned via company
     if (isAdmin) {
       const adminClient = createAdminClient();
       const { data: workflow } = await adminClient
@@ -76,15 +76,26 @@ export async function initiateDocumentUploadAction(
         return { success: false, errors: {}, formData: { workflow_id: workflowId }, globalError: 'workflowNotFound' };
       }
     } else {
-      const supabase = await createClient();
-      const { data: assignment } = await supabase
-        .from('user_workflows')
-        .select('workflow_id')
-        .eq('workflow_id', workflowId)
-        .eq('user_id', session.user.id)
+      const adminClient = createAdminClient();
+      // Check if user has access to this workflow via their company assignments
+      const { data: access } = await adminClient
+        .from('workflows')
+        .select('id, company_id')
+        .eq('id', workflowId)
         .single();
 
-      if (!assignment) {
+      if (!access) {
+        return { success: false, errors: {}, formData: { workflow_id: workflowId }, globalError: 'workflowNotFound' };
+      }
+
+      const { data: companyAccess } = await adminClient
+        .from('user_companies')
+        .select('company_id')
+        .eq('user_id', session.user.id)
+        .eq('company_id', access.company_id)
+        .single();
+
+      if (!companyAccess) {
         return { success: false, errors: {}, formData: { workflow_id: workflowId }, globalError: 'workflowNotFound' };
       }
     }
@@ -190,18 +201,26 @@ export async function deleteDocumentAction(documentId: string) {
 
     if (fetchError || !doc) throw new Error('Document not found');
 
-    // Verify access: admins can delete any document; users must be assigned to the workflow
+    // Verify access: admins can delete any document; users must have company access
     const isAdmin = session.user.role === Role.ADMIN;
     if (!isAdmin) {
-      const supabase = await createClient();
-      const { data: assignment } = await supabase
-        .from('user_workflows')
-        .select('workflow_id')
-        .eq('workflow_id', doc.workflow_id)
-        .eq('user_id', session.user.id)
+      // Check company access via workflow
+      const { data: workflow } = await adminClient
+        .from('workflows')
+        .select('company_id')
+        .eq('id', doc.workflow_id)
         .single();
 
-      if (!assignment) throw new Error('Unauthorized');
+      if (!workflow) throw new Error('Unauthorized');
+
+      const { data: companyAccess } = await adminClient
+        .from('user_companies')
+        .select('company_id')
+        .eq('user_id', session.user.id)
+        .eq('company_id', workflow.company_id)
+        .single();
+
+      if (!companyAccess) throw new Error('Unauthorized');
     }
 
     // Delete KB rows where metadata contains this file_id

@@ -2,6 +2,7 @@ import { getSession } from '@/lib/auth-session';
 import { notFound } from 'next/navigation';
 import { WorkflowTable } from '@/components/admin/workflow-table';
 import { getWorkflowsWithPagination } from '@/server-actions/workflow';
+import { getAllCompanies } from '@/server-actions/company';
 import { AdminWorkflowPageProps } from '@/types/workflow';
 
 export default async function AdminWorkflowsPage({ searchParams }: AdminWorkflowPageProps) {
@@ -12,8 +13,11 @@ export default async function AdminWorkflowsPage({ searchParams }: AdminWorkflow
   }
 
   const params = await searchParams;
-  const { workflows, totalCount, totalPages, currentPage, limit } =
-    await getWorkflowsWithPagination(params);
+  const [{ workflows, totalCount, totalPages, currentPage, limit }, companies] =
+    await Promise.all([
+      getWorkflowsWithPagination(params),
+      getAllCompanies(),
+    ]);
 
   return (
     <div className="container mx-auto py-6">
@@ -27,6 +31,8 @@ export default async function AdminWorkflowsPage({ searchParams }: AdminWorkflow
         sortDirection={(params.sortDirection as 'asc' | 'desc') || 'desc'}
         searchTerm={params.search || ''}
         typeFilter={params.typeFilter || 'all'}
+        companyFilter={params.companyFilter || 'all'}
+        companies={companies}
       />
     </div>
   );

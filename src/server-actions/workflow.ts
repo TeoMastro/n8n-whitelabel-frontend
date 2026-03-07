@@ -7,7 +7,6 @@ import { Role, WorkflowType } from '@/lib/constants';
 import {
   createWorkflowSchema,
   updateWorkflowSchema,
-  assignWorkflowSchema,
   formatZodErrors,
 } from '@/lib/validation-schemas';
 import logger from '@/lib/logger';
@@ -16,8 +15,6 @@ import { createClient } from '@/lib/supabase/server';
 import type {
   Workflow,
   WorkflowFormState,
-  WorkflowAssignment,
-  AssignWorkflowFormState,
   GetWorkflowsParams,
   GetWorkflowsResult,
 } from '@/types/workflow';
@@ -34,6 +31,8 @@ function mapWorkflow(w: Record<string, unknown>): Workflow {
   const config = (w.config as Record<string, unknown>) ?? {};
   return {
     id: w.id as string,
+    companyId: w.company_id as string,
+    companyName: (w as any).companies?.name ?? undefined,
     name: w.name as string,
     description: (w.description as string | null) ?? null,
     type: w.type as WorkflowType,
@@ -61,6 +60,7 @@ export async function createWorkflowAction(
     const session = await checkAdminAuth();
 
     const data = {
+      company_id: formData.get('company_id')?.toString() ?? '',
       name: formData.get('name')?.toString() ?? '',
       description: formData.get('description')?.toString() ?? '',
       type: (formData.get('type')?.toString() ?? 'chat') as WorkflowType,
@@ -102,7 +102,8 @@ export async function createWorkflowAction(
       params: parsedParams,
     };
 
-    const { error } = await supabase.from('workflows').insert({
+    const { data: newWorkflow, error } = await supabase.from('workflows').insert({
+      company_id: parsed.data.company_id,
       name: parsed.data.name.trim(),
       description: parsed.data.description?.trim() || null,
       type: parsed.data.type,
@@ -111,9 +112,30 @@ export async function createWorkflowAction(
       is_active: parsed.data.is_active,
       config,
       created_by: session.user.id,
-    });
+    }).select('id').single();
 
     if (error) throw error;
+
+    // If knowledge base is enabled, create a partition for this workflow
+    if (parsed.data.has_knowledge_base && newWorkflow) {
+      const shortId = newWorkflow.id.replace(/-/g, '_');
+      const partitionSql = `
+        CREATE TABLE IF NOT EXISTS public.knowledge_base_wf_${shortId}
+          PARTITION OF public.knowledge_base
+          FOR VALUES IN ('${newWorkflow.id}');
+        CREATE INDEX IF NOT EXISTS kb_wf_${shortId}_embedding_idx
+          ON public.knowledge_base_wf_${shortId}
+          USING hnsw (embedding vector_cosine_ops);
+      `;
+      // Execute DDL via the admin client's rpc or raw SQL
+      const { error: partitionError } = await supabase.rpc('exec_sql', { sql: partitionSql });
+      if (partitionError) {
+        logger.warn('Failed to create KB partition (may need manual creation)', {
+          workflowId: newWorkflow.id,
+          error: partitionError.message,
+        });
+      }
+    }
 
     logger.info('Workflow created', { adminId: session.user.id });
     revalidatePath('/admin/workflow');
@@ -123,6 +145,7 @@ export async function createWorkflowAction(
       success: false,
       errors: {},
       formData: {
+        company_id: formData.get('company_id')?.toString() ?? '',
         name: formData.get('name')?.toString() ?? '',
         description: formData.get('description')?.toString() ?? '',
         type: (formData.get('type')?.toString() ?? 'chat') as WorkflowType,
@@ -146,6 +169,7 @@ export async function updateWorkflowAction(
     const session = await checkAdminAuth();
 
     const data = {
+      company_id: formData.get('company_id')?.toString() ?? '',
       name: formData.get('name')?.toString() ?? '',
       description: formData.get('description')?.toString() ?? '',
       type: (formData.get('type')?.toString() ?? 'chat') as WorkflowType,
@@ -208,6 +232,7 @@ export async function updateWorkflowAction(
     const { error } = await supabase
       .from('workflows')
       .update({
+        company_id: parsed.data.company_id,
         name: parsed.data.name.trim(),
         description: parsed.data.description?.trim() || null,
         type: parsed.data.type,
@@ -229,6 +254,7 @@ export async function updateWorkflowAction(
       success: false,
       errors: {},
       formData: {
+        company_id: formData.get('company_id')?.toString() ?? '',
         name: formData.get('name')?.toString() ?? '',
         description: formData.get('description')?.toString() ?? '',
         type: (formData.get('type')?.toString() ?? 'chat') as WorkflowType,
@@ -248,6 +274,16 @@ export async function deleteWorkflowAction(workflowId: string) {
     const session = await checkAdminAuth();
 
     const supabase = createAdminClient();
+
+    // Try to drop KB partition if it exists
+    const shortId = workflowId.replace(/-/g, '_');
+    const dropSql = `DROP TABLE IF EXISTS public.knowledge_base_wf_${shortId};`;
+    try {
+      await supabase.rpc('exec_sql', { sql: dropSql });
+    } catch {
+      // Ignore errors — partition may not exist
+    }
+
     const { error } = await supabase
       .from('workflows')
       .delete()
@@ -266,91 +302,6 @@ export async function deleteWorkflowAction(workflowId: string) {
 }
 
 // ============================================================
-// Admin: Assignments
-// ============================================================
-
-export async function assignWorkflowToUserAction(
-  prevState: AssignWorkflowFormState,
-  formData: FormData
-): Promise<AssignWorkflowFormState> {
-  try {
-    const session = await checkAdminAuth();
-
-    const data = {
-      user_id: formData.get('user_id')?.toString() ?? '',
-      workflow_id: formData.get('workflow_id')?.toString() ?? '',
-    };
-
-    const parsed = assignWorkflowSchema.safeParse(data);
-    if (!parsed.success) {
-      return {
-        success: false,
-        errors: formatZodErrors(parsed.error),
-        formData: data,
-        globalError: null,
-      };
-    }
-
-    const supabase = createAdminClient();
-    const { error } = await supabase.from('user_workflows').upsert(
-      {
-        user_id: parsed.data.user_id,
-        workflow_id: parsed.data.workflow_id,
-        assigned_by: session.user.id,
-      },
-      { onConflict: 'user_id,workflow_id' }
-    );
-
-    if (error) throw error;
-
-    logger.info('Workflow assigned', {
-      adminId: session.user.id,
-      userId: parsed.data.user_id,
-      workflowId: parsed.data.workflow_id,
-    });
-
-    revalidatePath(`/admin/workflow/${parsed.data.workflow_id}`);
-
-    return { success: true, errors: {}, formData: data, globalError: null };
-  } catch (error) {
-    logger.error('Error assigning workflow', { error: (error as Error).message });
-    return {
-      success: false,
-      errors: {},
-      formData: {
-        user_id: formData.get('user_id')?.toString() ?? '',
-        workflow_id: formData.get('workflow_id')?.toString() ?? '',
-      },
-      globalError: 'unexpectedError',
-    };
-  }
-}
-
-export async function unassignWorkflowFromUserAction(
-  userId: string,
-  workflowId: string
-) {
-  try {
-    await checkAdminAuth();
-
-    const supabase = createAdminClient();
-    const { error } = await supabase
-      .from('user_workflows')
-      .delete()
-      .eq('user_id', userId)
-      .eq('workflow_id', workflowId);
-
-    if (error) throw error;
-
-    revalidatePath(`/admin/workflow/${workflowId}`);
-    return { success: true };
-  } catch (error) {
-    logger.error('Error unassigning workflow', { error: (error as Error).message });
-    throw error;
-  }
-}
-
-// ============================================================
 // Admin: Data fetches
 // ============================================================
 
@@ -361,7 +312,7 @@ export async function getWorkflowById(workflowId: string): Promise<Workflow | fa
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from('workflows')
-      .select('*')
+      .select('*, companies(name)')
       .eq('id', workflowId)
       .single();
 
@@ -383,6 +334,7 @@ export async function getWorkflowsWithPagination(
     const limit = parseInt(params.limit || '10');
     const search = params.search || '';
     const typeFilter = params.typeFilter || 'all';
+    const companyFilter = params.companyFilter || '';
     const sortField = params.sortField || 'created_at';
     const sortDirection = (params.sortDirection as 'asc' | 'desc') || 'desc';
     const offset = (page - 1) * limit;
@@ -390,13 +342,14 @@ export async function getWorkflowsWithPagination(
     const supabase = createAdminClient();
     let query = supabase
       .from('workflows')
-      .select('*', { count: 'exact' });
+      .select('*, companies(name)', { count: 'exact' });
 
     if (search) {
       const safe = search.replace(/[,.()]/g, '');
       query = query.or(`name.ilike.%${safe}%,description.ilike.%${safe}%`);
     }
     if (typeFilter !== 'all') query = query.eq('type', typeFilter);
+    if (companyFilter) query = query.eq('company_id', companyFilter);
 
     const dbSort = sortField === 'createdAt' ? 'created_at'
       : sortField === 'updatedAt' ? 'updated_at'
@@ -419,55 +372,6 @@ export async function getWorkflowsWithPagination(
   }
 }
 
-export async function getWorkflowAssignments(
-  workflowId: string
-): Promise<WorkflowAssignment[]> {
-  try {
-    await checkAdminAuth();
-
-    const supabase = createAdminClient();
-    // Fetch assignments
-    const { data: assignments, error } = await supabase
-      .from('user_workflows')
-      .select('user_id, workflow_id, assigned_at, assigned_by')
-      .eq('workflow_id', workflowId);
-
-    if (error) throw error;
-
-    // Fetch profiles separately to avoid ambiguous FK join
-    const userIds = (assignments || []).map((a) => a.user_id);
-    let profileMap: Record<string, { id: string; first_name: string | null; last_name: string | null; email: string }> = {};
-
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email')
-        .in('id', userIds);
-
-      profileMap = Object.fromEntries((profiles || []).map((p) => [p.id, p]));
-    }
-
-    return (assignments || []).map((row) => {
-      const profile = profileMap[row.user_id];
-      return {
-        userId: row.user_id,
-        workflowId: row.workflow_id,
-        assignedAt: new Date(row.assigned_at),
-        assignedBy: row.assigned_by ?? null,
-        user: {
-          id: row.user_id,
-          firstName: profile?.first_name ?? null,
-          lastName: profile?.last_name ?? null,
-          email: profile?.email ?? '',
-        },
-      };
-    });
-  } catch (error) {
-    logger.error('Error fetching assignments', { error: (error as Error).message });
-    throw error;
-  }
-}
-
 // ============================================================
 // User: fetch own assigned workflows (no admin check — RLS enforced)
 // ============================================================
@@ -477,7 +381,7 @@ export async function getUserWorkflows(): Promise<Workflow[]> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('workflows')
-      .select('*')
+      .select('*, companies(name)')
       .eq('is_active', true)
       .order('name');
 
@@ -488,4 +392,3 @@ export async function getUserWorkflows(): Promise<Workflow[]> {
     throw error;
   }
 }
-

@@ -1,5 +1,6 @@
 import { WorkflowType, DocumentStatus } from '@/lib/constants';
 import { User } from '@/types/user';
+import { Company } from '@/types/company';
 
 
 export type WorkflowParam = {
@@ -17,6 +18,8 @@ export type WorkflowConfig = {
 
 export type Workflow = {
   id: string;
+  companyId: string;
+  companyName?: string;
   name: string;
   description: string | null;
   type: WorkflowType;
@@ -27,19 +30,6 @@ export type Workflow = {
   createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
-};
-
-export type WorkflowAssignment = {
-  userId: string;
-  workflowId: string;
-  assignedAt: Date;
-  assignedBy: string | null;
-  user: {
-    id: string;
-    firstName: string | null;
-    lastName: string | null;
-    email: string;
-  };
 };
 
 export type WorkflowDocument = {
@@ -61,6 +51,7 @@ export type WorkflowFormState = {
   success: boolean;
   errors: Record<string, string[]>;
   formData: {
+    company_id: string;
     name: string;
     description: string;
     type: WorkflowType;
@@ -68,16 +59,6 @@ export type WorkflowFormState = {
     has_knowledge_base: boolean;
     is_active: boolean;
     params_json: string;
-  };
-  globalError: string | null;
-};
-
-export type AssignWorkflowFormState = {
-  success: boolean;
-  errors: Record<string, string[]>;
-  formData: {
-    user_id: string;
-    workflow_id: string;
   };
   globalError: string | null;
 };
@@ -107,6 +88,7 @@ export type GetWorkflowsParams = {
   limit?: string;
   search?: string;
   typeFilter?: string;
+  companyFilter?: string;
   sortField?: string;
   sortDirection?: string;
 };
@@ -129,18 +111,19 @@ export type WorkflowTableProps = {
   sortDirection: 'asc' | 'desc';
   searchTerm: string;
   typeFilter: string;
+  companyFilter: string;
+  companies: { id: string; name: string }[];
 };
 
 export type WorkflowFormProps = {
   workflow?: Omit<Workflow, 'createdAt' | 'updatedAt'> | null;
   mode: 'create' | 'update';
+  companies: { id: string; name: string }[];
 };
 
 export type WorkflowViewProps = {
   workflow: Workflow;
-  assignments: WorkflowAssignment[];
   documents?: WorkflowDocument[];
-  users: User[];
 };
 
 export type AdminWorkflowPageProps = {

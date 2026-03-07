@@ -109,7 +109,7 @@ export async function getTriggerLogDetail(id: string): Promise<TriggerLogEntry> 
     const supabase = createAdminClient();
 
     // Base query
-    let query = supabase
+    const query = supabase
       .from('trigger_logs')
       .select('id, workflow_id, user_id, status, request_params, response_data, error_message, duration_ms, created_at, execution_id');
 
@@ -122,17 +122,23 @@ export async function getTriggerLogDetail(id: string): Promise<TriggerLogEntry> 
     }
 
     if (!isAdmin && row.user_id !== session.user.id) {
-      // Check if user is assigned to the workflow
-      const { data: assignment, error: assignmentError } = await supabase
-        .from('user_workflows')
-        .select('workflow_id')
-        .eq('user_id', session.user.id)
-        .eq('workflow_id', row.workflow_id)
+      // Check if user has access to the workflow via company
+      const { data: workflow } = await supabase
+        .from('workflows')
+        .select('company_id')
+        .eq('id', row.workflow_id)
         .single();
-        
-      if (assignmentError || !assignment) {
-        throw new Error('Unauthorized');
-      }
+
+      if (!workflow) throw new Error('Unauthorized');
+
+      const { data: companyAccess } = await supabase
+        .from('user_companies')
+        .select('company_id')
+        .eq('user_id', session.user.id)
+        .eq('company_id', workflow.company_id)
+        .single();
+
+      if (!companyAccess) throw new Error('Unauthorized');
     }
 
     // Fetch related display names and usage cost in parallel
@@ -189,23 +195,24 @@ export async function getTriggerWorkflowsForFilter(): Promise<{ id: string; name
       if (error) throw error;
       return (data || []).map((w) => ({ id: w.id, name: w.name }));
     } else {
-      // Users see workflows they are assigned to
-      const { data, error } = await supabase
-        .from('user_workflows')
-        .select('workflow_id, workflows!inner(name, type)')
-        .eq('user_id', session.user.id)
-        .eq('workflows.type', 'trigger');
-      
-      if (error) throw error;
+      // Users see workflows from their assigned companies
+      const { data: companies } = await supabase
+        .from('user_companies')
+        .select('company_id')
+        .eq('user_id', session.user.id);
 
-      // Deduplicate workflows and map to array
-      const wfMap = new Map<string, string>();
-      (data || []).forEach((row: any) => {
-        if (row.workflows && row.workflows.name) {
-          wfMap.set(row.workflow_id, row.workflows.name);
-        }
-      });
-      return Array.from(wfMap.entries()).map(([id, name]) => ({ id, name })).sort((a,b) => a.name.localeCompare(b.name));
+      const companyIds = (companies || []).map((c) => c.company_id);
+      if (companyIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from('workflows')
+        .select('id, name')
+        .eq('type', 'trigger')
+        .in('company_id', companyIds)
+        .order('name');
+
+      if (error) throw error;
+      return (data || []).map((w) => ({ id: w.id, name: w.name }));
     }
   } catch (error) {
     logger.error('Error fetching trigger workflows for filter', { error: (error as Error).message });

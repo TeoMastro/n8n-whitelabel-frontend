@@ -2,16 +2,15 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Globe, Database } from 'lucide-react';
+import { ArrowLeft, Edit, Globe, Database, Building2 } from 'lucide-react';
 import { WorkflowViewProps } from '@/types/workflow';
 import { DocumentManager } from '@/components/workflow/document-manager';
 import { TriggerWorkflow } from '@/components/workflow/trigger-workflow';
 import { HostedChat } from '@/components/workflow/hosted-chat';
 import { WorkflowDeleteButton } from './workflow-delete-button';
-import { WorkflowAssignments } from './workflow-assignments';
 import Link from 'next/link';
 
-export function WorkflowView({ workflow, assignments, documents = [], users = [] }: WorkflowViewProps) {
+export function WorkflowView({ workflow, documents = [] }: WorkflowViewProps) {
   const t = useTranslations('app');
 
   return (
@@ -44,6 +43,15 @@ export function WorkflowView({ workflow, assignments, documents = [], users = []
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
+              {workflow.companyName && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    <Building2 className="h-3 w-3" />
+                    {t('company')}
+                  </label>
+                  <p className="mt-1">{workflow.companyName}</p>
+                </div>
+              )}
               {workflow.description && (
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">{t('description')}</label>
@@ -91,16 +99,6 @@ export function WorkflowView({ workflow, assignments, documents = [], users = []
 
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Assignments */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('assignedUsers')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <WorkflowAssignments workflowId={workflow.id} assignments={assignments} users={users} />
         </CardContent>
       </Card>
 

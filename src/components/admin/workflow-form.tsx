@@ -19,13 +19,14 @@ import { InfoAlert } from '@/components/info-alert';
 import { WorkflowFormProps, WorkflowFormState } from '@/types/workflow';
 import { WorkflowType } from '@/lib/constants';
 
-export function WorkflowForm({ workflow, mode }: WorkflowFormProps) {
+export function WorkflowForm({ workflow, mode, companies }: WorkflowFormProps) {
   const t = useTranslations('app');
 
   const initialState: WorkflowFormState = {
     success: false,
     errors: {},
     formData: {
+      company_id: workflow?.companyId ?? '',
       name: workflow?.name ?? '',
       description: workflow?.description ?? '',
       type: workflow?.type ?? WorkflowType.CHAT,
@@ -69,6 +70,21 @@ export function WorkflowForm({ workflow, mode }: WorkflowFormProps) {
           {state.globalError && (
             <InfoAlert message={t(state.globalError)} type="error" />
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="company_id">{t('company')}</Label>
+            <Select name="company_id" defaultValue={state.formData.company_id}>
+              <SelectTrigger className={state.errors.company_id ? 'border-red-500' : ''}>
+                <SelectValue placeholder={t('selectCompany')} />
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {err('company_id') && <p className="text-sm text-red-500">{err('company_id')}</p>}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="name">{t('workflowName')}</Label>

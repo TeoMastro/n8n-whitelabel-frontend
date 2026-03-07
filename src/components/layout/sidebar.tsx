@@ -1,4 +1,4 @@
-import { Home, Users, Bot, MessageSquare, Activity } from 'lucide-react';
+import { Home, Users, Bot, MessageSquare, Activity, Building2 } from 'lucide-react';
 import Link from 'next/link';
 
 import {
@@ -54,6 +54,16 @@ export async function AppSidebar() {
             title: t('workflows'),
             url: '/admin/workflow',
             icon: Bot,
+          },
+        ]
+      : []),
+    // Admin-only: Companies
+    ...(isAdmin
+      ? [
+          {
+            title: t('companies'),
+            url: '/admin/company',
+            icon: Building2,
           },
         ]
       : []),
