@@ -526,17 +526,39 @@ $$;
 
 
 -- ============================================================
--- 13. The match_knowledge_base function
+-- 13. The match_documents function
 -- ============================================================
+CREATE OR REPLACE FUNCTION match_documents(
+  query_embedding vector(1536),
+  filter jsonb DEFAULT '{}',
+  match_count int DEFAULT 10
+)
+RETURNS TABLE (
+  id bigint,
+  content text,
+  metadata jsonb,
+  similarity float
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  wf_id uuid;
+  meta_filter jsonb;
 BEGIN
+  -- Extract workflow_id for partition pruning
+  wf_id := (filter ->> 'workflow_id')::uuid;
+  
+  -- Remove workflow_id from filter so the metadata @> check works
+  meta_filter := filter - 'workflow_id';
+
   RETURN QUERY
   SELECT kb.id, kb.content, kb.metadata,
          1 - (kb.embedding <=> query_embedding) AS similarity
   FROM public.knowledge_base kb
-  WHERE kb.workflow_id = workflow_id_filter
-    AND kb.embedding IS NOT NULL
-    AND (filter = '{}' OR kb.metadata @> filter)
-    AND 1 - (kb.embedding <=> query_embedding) > match_threshold
+  WHERE kb.embedding IS NOT NULL
+    AND (wf_id IS NULL OR kb.workflow_id = wf_id)
+    AND (meta_filter = '{}' OR kb.metadata @> meta_filter)
   ORDER BY kb.embedding <=> query_embedding
   LIMIT match_count;
 END;
+$$;
